@@ -1,0 +1,27 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+  }
+}
+
+plugins {
+  id 'java'
+  id 'application'
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+mainClassName = 'org.apache.kafka.tools.ProducerPerformance'
+
+dependencies {
+  compile "org.apache.kafka:kafka-tools:2.0.0"
+}
+
+repositories {
+  jcenter()
+}
+
+
