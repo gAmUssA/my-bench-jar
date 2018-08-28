@@ -1,0 +1,40 @@
+[source,shell]
+----
+#Producer
+
+# Setup
+bin/kafka-topics.sh --zookeeper localhost:2181/kafka-local --create --topic test-rep-one --partitions 6 --replication-factor 1
+bin/kafka-topics.sh --zookeeper localhost:2181/kafka-local --create --topic test-rep-two --partitions 6 --replication-factor 3
+
+# java -cp build/libs/my-bench-jar-all.jar org.apache.kafka.tools.ProducerPerformance
+
+# Single thread, no replication
+bin/kafka-run-class.sh org.apache.kafka.tools.ProducerPerformance --print-metrics --topic test-rep-one --num-records 6000000 --throughput 100000 --record-size 100 --producer-props bootstrap.servers=kafka_host:9092 buffer.memory=67108864 batch.size=8196
+
+# Single-thread, async 3x replication
+bin/kafka-run-class.sh org.apache.kafka.tools.ProducerPerformance --print-metrics --topic test-rep-two --num-records 6000000 --throughput 100000 --record-size 100 --producer-props bootstrap.servers=kafka_host:9092 acks=1 buffer.memory=67108864 batch.size=8196
+
+# Single-thread, sync 3x replication
+bin/kafka-run-class.sh org.apache.kafka.tools.ProducerPerformance --print-metrics --topic test-rep-two --num-records 6000000 --throughput 100000 --record-size 100 --producer-props bootstrap.servers=kafka_host:9092 acks=-1 buffer.memory=67108864 batch.size=8196
+
+# Effect of message size
+
+for i in 10 100 1000 10000 100000;
+do
+echo ""
+echo $i
+bin/kafka-run-class.sh org.apache.kafka.tools.ProducerPerformance --print-metrics --topic test-rep-two --num-records  $((1000*1024*1024/$i)) --throughput 100000 --record-size $i --producer-props bootstrap.servers=kafka_host:9092 acks=1 buffer.memory=67108864 batch.size=8196
+done;
+
+
+# Consumer
+
+# Consumer throughput
+kafka-consumer-perf-test --broker-list kafka_host:9092 --messages 6000000 --threads 1 --topic test-rep-two --print-metrics
+
+# 3 Consumers
+
+# On three servers, run:
+kafka-consumer-perf-test --broker-list kafka_host:9092 --messages 6000000 --threads 1 --topic test-rep-two --print-metrics
+
+----
